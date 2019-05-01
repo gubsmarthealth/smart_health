@@ -19,6 +19,7 @@ class PublicRepository extends BaseRepository
                     'error' => $validator->errors(),
                 ];
             } else {
+                //Received Data from Users input =========
                 $user_data = array(
                     isset($input['age']) ? $input['age'] : 0,
                     isset($input['sex']) ? $input['sex'] : 1,
@@ -35,25 +36,38 @@ class PublicRepository extends BaseRepository
                     isset($input['thal']) ? $input['thal'] : 0,
                 );
 
-                $file = public_path('data.txt');
-                $doc = file_get_contents($file);
+                /// UCI Data Processing Start===========
 
-                $line = explode("\n", $doc);
-                $data = [];
-                $result = [];
+                $file = public_path('data.txt'); /// Data File.
+                $doc = file_get_contents($file); /// Get Data From File
+                $line = explode("\n", $doc); /// Generate Array from file Data
+
+                $data = []; /// Array For 13 sign store.
+                $result = []; ///Array For result store against sign. 
+
                 foreach ($line as $mainkey => $newline) {
                     $parts = explode(' ', $newline);
                     foreach ($parts as $key => $value) {
                         if ($key + 1 < count($parts)) {
-                            $data[$mainkey][$key] = $value;
+                            $data[$mainkey][$key] = $value; /// Store only Signs
                         } else {
-                            $result[] = str_replace("\r", "", $value);
+                            $result[] = str_replace("\r", "", $value); ///Store Result
                         }
                     }
                 }
-                $classifier = new KNearestNeighbors();
-                $classifier->train($data, $result);
-                $rsData['result'] = $classifier->predict($user_data);
+
+                /////=========================////===================================////
+                ///” KNearestNeighbors” This is Packeg for PHP Machin Learning, for more details got to link below. 
+                //URL: https://github.com/php-ai/php-ml
+                //Details URL:  https://php-ml.readthedocs.io/en/latest/machine-learning/classification/k-nearest-neighbors/
+
+                //In this packeg we need to use Data set array and result array against of the dataset, then we find result using Users imputed data.
+                /////=========================////===================================////
+
+                $classifier = new KNearestNeighbors(); ///Object of ML
+                $classifier->train($data, $result); ///Train with data array and Result array.
+                $rsData['result'] = $classifier->predict($user_data); ///Get Result Using Users Data.
+
                 if ($rsData['result'] == 0){
                     $rsData['disease'] = DiseaseSubCategory::where('id', 1)->first()->toArray();
                 }
@@ -71,6 +85,6 @@ class PublicRepository extends BaseRepository
                 'error' => $exception->getMessage(),
             ];
         }
-        return $resData;
+        return $resData;  // Return Result
     }
 }
